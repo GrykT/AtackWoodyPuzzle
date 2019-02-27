@@ -3,6 +3,7 @@ import itertools
 import random
 import copy
 import datetime
+import numpy as np
 
 class Brain:
     """Brain プレイヤーの脳。からだの外にある。盤面の評価値計算、最善手の探索。"""
@@ -88,10 +89,12 @@ class Brain:
     def calc_evaluation_value(self,board,blocks):
         #残りブロックが少ないほど良い
         spaces =  self.count_space((board.size ** 2), board.now)
+        #ブロックが固まってるほど良い
+        around_blocks = self.count_around_block(board)
         #置けるブロックの種類が多いほど良い（値*100）
         kinds = self.count_settable_kinds_of_block(board, self.block_data.pattern_to_block())
 
-        return spaces + 100 * kinds
+        return spaces + around_blocks + 100 * kinds
 
     def count_space(self, all_count,board_list):
         return all_count - sum([p for line in board_list for p in line])
@@ -99,6 +102,23 @@ class Brain:
     def count_settable_kinds_of_block(self, board, blocks):
         kinds = len([b for b in blocks if len(self.search_settable_point(board,b)) > 0])
         return kinds
+
+    def count_around_block(self,board):
+        sum_around_blocks = 0
+        #周りに0を配置してスライスして足す
+        ar = np.zeros((board.size+2,board.size+2), dtype=object)
+        ar_one = np.ones((board.size,board.size), dtype=object) #xorして1/0反転させる用
+        bd = np.array(board.now)
+        b_ar_zero = ar[1:-1,1:-1] = bd
+        #上下左右
+        #+ななめ
+        around_blocks_list = ar[:-2,1:-1]+ar[2:,1:-1]+ar[1:-1,:-2]+ar[1:-1,2:] \
+                           + ar[:-2,:-2]+ar[:-2,2:]+ar[2:,:-2]+ar[2:,2:]
+        #ブロックが置いてあるところを足す
+        sum_around_blocks = sum(sum(around_blocks_list * bd))
+        #空いている位置の周りが埋まってたら孤立しているので駄目
+        sum_empty_around_blocks = sum(sum(around_blocks_list * (bd ^ ar_one)))
+        return sum_around_blocks - sum_empty_around_blocks
 
 class Result_Calc:
     """

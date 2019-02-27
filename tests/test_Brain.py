@@ -190,3 +190,15 @@ def test_count_settable_kinds_of_block(my_brain,my_board,tst_block,mask,expect):
     my_board.now = mask
     kinds = my_brain.count_settable_kinds_of_block(my_board,tst_block)
     assert kinds == expect
+
+@pytest.mark.parametrize(
+    "mask,expect", [
+        ([[0 for x in range(board_size)] for y in range(board_size)], 0),
+        ([[1 for x in range(board_size)] for y in range(board_size)], 12+20*(board_size-2)+8*(board_size-2)**2),
+     ]
+    )
+def test_count_around_block(my_brain,my_board,tst_block,mask,expect):
+    my_board.now = mask
+    sum_around = my_brain.count_around_block(my_board)
+    assert sum_around == expect
+
