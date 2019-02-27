@@ -5,16 +5,17 @@ import copy
 
 class Brain:
     """Brain プレイヤーの脳。からだの外にある。盤面の評価値計算、最善手の探索。"""
-    def __init__(self):
+    def __init__(self, block_data):
         self.max_depth = 5
+        self.block_data = block_data
 
     def get_setting_info(self,real_board,blocks_field):
         """
         最終的に置くと判断したブロックと場所をリストに入れて返す。
         0を最初に置くブロックとする。
         """
-        results = self.search_all_permutation_blocks(real_board, blocks_field)
-        return results
+        results,eval = self.search_all_permutation_blocks(real_board, blocks_field)
+        return results,eval
     
     def search_all_permutation_blocks(self,board,blocks):
         """
@@ -27,7 +28,7 @@ class Brain:
             results.appendleft(self.search_blocks_of_a_permutation_setting(board,blocks,p))
 
         max_result,eval = sorted(results, key=lambda rs : rs[1], reverse=True)[0]
-        return max_result
+        return max_result,eval
 
 
     def search_blocks_of_a_permutation_setting(self,board,blocks,permutation,depth=0):
@@ -43,7 +44,7 @@ class Brain:
         tmp_eval = 0
 
         if(depth > (len(blocks)-1) or depth > self.max_depth):
-            eval = self.calc_evaluation_value(board.now)
+            eval = self.calc_evaluation_value(board,blocks)
             return results,eval
 
         settable_points = self.search_settable_point(board,blocks[depth])
@@ -55,6 +56,7 @@ class Brain:
         if(len(settable_points) < 1):
             #置けない
             results.appendleft(Result_Calc(blocks[depth]))
+            eval = self.calc_evaluation_value(board,blocks)
             return results,eval
 
         
@@ -82,9 +84,20 @@ class Brain:
                 settable_points.append((i,j))
         return settable_points
 
-    def calc_evaluation_value(self,board):
-        #仮実装 1～9ランダムで
-        return random.randrange(1,9)
+    def calc_evaluation_value(self,board,blocks):
+        #残りブロックが少ないほど良い
+        spaces =  self.count_space((board.size ** 2), board.now)
+        #置けるブロックの種類が多いほど良い（値*100）
+        kinds = self.count_settable_kinds_of_block(board, self.block_data.pattern_to_block())
+
+        return spaces + 100 * kinds
+
+    def count_space(self, all_count,board_list):
+        return all_count - sum([p for line in board_list for p in line])
+
+    def count_settable_kinds_of_block(self, board, blocks):
+        kinds = len([b for b in blocks if len(self.search_settable_point(board,b)) > 0])
+        return kinds
 
 class Result_Calc:
     """

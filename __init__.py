@@ -11,7 +11,7 @@ from datetime import datetime
 if __name__ == "__main__":
     logname = datetime.strftime(datetime.now(),"%Y%m%d%H%M%S")
     player = Player(Pool(3,Blocks())
-                    , Board(5),Brain()
+                    , Board(10),Brain(Blocks())
                     , max=1000
                     , logger=Logger(getcwd() + f"\\log\\woody_log_{logname}.log"))
     result_num = player.start()

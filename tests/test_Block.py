@@ -78,3 +78,9 @@ def test_block_set():
     assert b.form == [[1,1,1],
                       [1,1,1],
                       [1,1,1]]
+
+def test_pettern_to_block():
+    blocks = Blocks()
+    for b in blocks.pattern_to_block():
+        assert b.name in blocks.pattern.keys()
+        assert b.form in blocks.pattern.values()

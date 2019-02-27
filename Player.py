@@ -32,7 +32,7 @@ class Player:
             blocks_field = self.pool.get_blocks()
             names = ",".join([b.name for b in blocks_field])
             self.logger.write(f"New get Blocks:{names}")
-            results_que = self.my_brain.get_setting_info(self.playing_board, blocks_field)
+            results_que,eval = self.my_brain.get_setting_info(self.playing_board, blocks_field)
             while(len(results_que) > 0):
                 result = results_que.popleft()
                 if result.playable:
@@ -41,10 +41,10 @@ class Player:
                     self.logger.write(f"Use Block:{result.block.name}  Set:({result.x},{result.y})")
                 else:
                     self.logger.write("置けないよ")
-
                 self.logger.write(self.get_boardstate())
-                playable_game = result.playable                
+                playable_game = result.playable
                 cnt += 1
+            self.logger.write(f"thie eval:{eval}")
 
         self.logger.write(f"【結果】\n置いたブロック数：{self.result_set_blocks_num}")
         self.logger.write("ゲームオーバー。。。")

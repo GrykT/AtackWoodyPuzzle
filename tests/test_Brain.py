@@ -1,5 +1,5 @@
 from Brain import Brain
-from Blocks import Block
+from Blocks import Block,Blocks
 from Board import Board
 import pytest
 from collections import deque
@@ -19,11 +19,11 @@ def tst_block():
 
 @pytest.fixture(scope="function", autouse=True)
 def my_brain():
-    br = Brain()
+    br = Brain(Blocks())
     yield br
 
 def test_get_setting_info_init(my_brain,my_board,tst_block):
-    res = my_brain.get_setting_info(my_board, tst_block)
+    res,eval = my_brain.get_setting_info(my_board, tst_block)
     assert 0 <= res[0].x < board_size
     assert 0 <= res[0].y < board_size
     assert res[0].block.form == tst_block[0].form
@@ -31,7 +31,7 @@ def test_get_setting_info_init(my_brain,my_board,tst_block):
 
 def test_calc_cant_set(my_brain, my_board, tst_block):
     my_board.now[0][0] = 1
-    results = my_brain.get_setting_info(my_board, tst_block)
+    results,eval = my_brain.get_setting_info(my_board, tst_block)
 
     for r in results:
         assert (r.x,r.y) != (0,0)
@@ -136,7 +136,7 @@ def test_search_all_permutation_blocks(my_brain,my_board,tst_block):
     tst_block.append(Block(("test2",[[1 for i in range(board_size)]])))
     tst_block.append(Block(("test3",[[1] for i in range(board_size)])))
 
-    result = my_brain.search_all_permutation_blocks(my_board,tst_block)
+    result,eval = my_brain.search_all_permutation_blocks(my_board,tst_block)
 
     assert_res = []
     block_num = len(tst_block)
@@ -165,7 +165,28 @@ def test_search_all_permutation_blocks(my_brain,my_board,tst_block):
     )
 def test_search_all_permutation_blocks_cantplay(my_brain,my_board,tst_b):
     my_board.now = [[1 if x!=y else 0 for x in range(board_size)] for y in range(board_size)]
-    result = my_brain.search_all_permutation_blocks(my_board,tst_b)
+    result,eval = my_brain.search_all_permutation_blocks(my_board,tst_b)
     
     for r in result:
         assert not r.playable
+
+
+def test_count_space_ini(my_brain,my_board):
+    assert my_board.size ** 2 == my_brain.count_space((my_board.size ** 2), my_board.now)
+
+def test_count_space(my_brain,my_board):
+    my_board.now[0][0] = 1
+    my_board.now[0][1] = 1
+    assert (my_board.size ** 2) - 2 == my_brain.count_space((my_board.size ** 2), my_board.now)
+
+
+@pytest.mark.parametrize(
+    "mask,expect", [
+        ([[0 for x in range(board_size)] for y in range(board_size)], 1),
+        ([[1 for x in range(board_size)] for y in range(board_size)], 0),
+     ]
+    )
+def test_count_settable_kinds_of_block(my_brain,my_board,tst_block,mask,expect):
+    my_board.now = mask
+    kinds = my_brain.count_settable_kinds_of_block(my_board,tst_block)
+    assert kinds == expect

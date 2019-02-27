@@ -77,3 +77,6 @@ class Blocks:
     def get_block_random(self):
         name,form = random.choice(list(self.pattern.items()))
         return Block(name,form)
+
+    def pattern_to_block(self):
+        return [Block(n,f) for n,f in self.pattern.items()]

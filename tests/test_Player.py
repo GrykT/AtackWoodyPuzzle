@@ -1,6 +1,5 @@
 from Board import Board
-from Blocks import Block
-from Blocks import Blocks
+from Blocks import Block,Blocks
 from Player import Player
 from Pool import Pool
 from Brain import Brain, Result_Calc
@@ -16,10 +15,10 @@ def make_player(use_block, result_data, board_size):
     mock_pool.get_blocks = Mock()
     mock_pool.get_blocks.return_value = use_block
 
-    mock_brain = Brain()
+    mock_brain = Brain(Blocks())
     mock_brain.get_setting_info = Mock()
-    mock_brain.get_setting_info.side_effect= lambda *a,**k:copy.deepcopy(deque(result_data))
-
+    mock_brain.get_setting_info.side_effect = \
+        lambda *a,**k : (copy.deepcopy(deque(result_data)) , 0)
     return Player(mock_pool,Board(board_size),mock_brain,max=10)
 
 @pytest.fixture(scope="function", autouse=True)
