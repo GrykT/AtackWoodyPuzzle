@@ -102,9 +102,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+<<<<<<< HEAD
 
 #vs
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
+=======
+>>>>>>> AtackWoodyPuzzle/master
