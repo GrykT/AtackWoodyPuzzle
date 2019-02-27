@@ -2,6 +2,7 @@ from collections import deque
 import itertools
 import random
 import copy
+import datetime
 
 class Brain:
     """Brain プレイヤーの脳。からだの外にある。盤面の評価値計算、最善手の探索。"""
@@ -49,9 +50,11 @@ class Brain:
 
         settable_points = self.search_settable_point(board,blocks[depth])
 
-        if(len(settable_points) >  board.size * 2):
-            #パフォーマンス問題ありそうならここで刈り込みしないとだめ。取り敢えずボードサイズの2倍くらい目処
-            settable_points = [(x,y) for x,y in settable_points[:board.size * 2]]
+        if(len(settable_points) >  5):
+            #パフォーマンス問題ありそうならここで刈り込みしないとだめ。
+            #ボードサイズの2倍だとサイズ10でもう終わらない。10個でもだめ。
+            #端に近い方から5個だけ選ぶことにする
+            settable_points = sorted(settable_points, key=lambda p : list(p)[0] + list(p)[1])[:5]
 
         if(len(settable_points) < 1):
             #置けない
@@ -59,7 +62,6 @@ class Brain:
             eval = self.calc_evaluation_value(board,blocks)
             return results,eval
 
-        
         for i,j in settable_points:
             tmp_board = board.copy()
             tmp_board.set_block(blocks[depth],i,j)
@@ -68,7 +70,6 @@ class Brain:
             if tmp_eval >= eval:
                 eval = tmp_eval
                 results = copy.deepcopy(tmp_results)
-
         return results,eval
 
 
