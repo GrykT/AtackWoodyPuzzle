@@ -22,14 +22,26 @@ class Brain:
     def search_all_permutation_blocks(self,board,blocks):
         """
         ①blocksに含まれるブロックを置く順番それぞれについて、最も評価値の高い置き方を取得する
-        ②それらの中から最も評価値の高い順番を取得して返す
+        ②それらの中からゲーム続行が長く続くもの＆最も評価値の高い順番を取得して返す
         """
         results = deque()
         size=len(blocks)
         for p in [list(p_list) for p_list in itertools.permutations(range(size),size)]:
             results.appendleft(self.search_blocks_of_a_permutation_setting(board,blocks,p))
 
+
+        s = sorted(results
+                      , key=lambda rs : [r.playable for r in rs[0]].count(True)
+                      , reverse=True)
         max_result,eval = sorted(results, key=lambda rs : rs[1], reverse=True)[0]
+        
+
+        for r_que in results:
+            print(f"all_result_eval:{r_que[1]}")
+            for r in r_que[0]:
+                print(f"all_result_playable:{r.playable}")
+                print("permu:{} -({},{})".format(r.block.name,r.x,r.y))
+        print(f"selected_eval:{eval}")
         return max_result,eval
 
 
@@ -49,25 +61,31 @@ class Brain:
             eval = self.calc_evaluation_value(board,blocks)
             return results,eval
 
-        settable_points = self.search_settable_point(board,blocks[depth])
+        target_block = blocks[permutation[depth]]
+        settable_points = self.search_settable_point(board,target_block)
 
-        if(len(settable_points) >  5):
+        if(len(settable_points)>5):
             #パフォーマンス問題ありそうならここで刈り込みしないとだめ。
             #ボードサイズの2倍だとサイズ10でもう終わらない。10個でもだめ。
             #端に近い方から5個だけ選ぶことにする
-            settable_points = sorted(settable_points, key=lambda p : list(p)[0] + list(p)[1])[:5]
+            s_tmp = sorted(settable_points
+                                     , key=lambda p : abs(board.size/2-list(p)[0])
+                                     , reverse=True)
+            settable_points = sorted(s_tmp
+                                     , key=lambda p : abs(board.size/2-list(p)[1])
+                                     , reverse=True)[:5]
 
         if(len(settable_points) < 1):
             #置けない
-            results.appendleft(Result_Calc(blocks[depth]))
+            results.appendleft(Result_Calc(target_block))
             eval = self.calc_evaluation_value(board,blocks)
             return results,eval
 
         for i,j in settable_points:
             tmp_board = board.copy()
-            tmp_board.set_block(blocks[depth],i,j)
+            tmp_board.set_block(target_block,i,j)
             tmp_results,tmp_eval = self.search_blocks_of_a_permutation_setting(tmp_board,blocks,permutation,depth+1)
-            tmp_results.appendleft(Result_Calc(blocks[depth],i,j,True))
+            tmp_results.appendleft(Result_Calc(target_block,i,j,True))
             if tmp_eval >= eval:
                 eval = tmp_eval
                 results = copy.deepcopy(tmp_results)
@@ -80,8 +98,7 @@ class Brain:
         """
         settable_points = []
         for i,j in [(x,y) for x in range(board.size) \
-                          for y in range(board.size) \
-                          if board.now[x][y] != 1]:
+                          for y in range(board.size)]:
             if(board.can_set(block,i,j)):
                 settable_points.append((i,j))
         return settable_points
@@ -115,7 +132,7 @@ class Brain:
         around_blocks_list = ar[:-2,1:-1]+ar[2:,1:-1]+ar[1:-1,:-2]+ar[1:-1,2:] \
                            + ar[:-2,:-2]+ar[:-2,2:]+ar[2:,:-2]+ar[2:,2:]
         #ブロックが置いてあるところを足す
-        sum_around_blocks = sum(sum(around_blocks_list * bd))
+        #sum_around_blocks = sum(sum(around_blocks_list * bd))
         #空いている位置の周りが埋まってたら孤立しているので駄目
         sum_empty_around_blocks = sum(sum(around_blocks_list * (bd ^ ar_one)))
         return sum_around_blocks - sum_empty_around_blocks

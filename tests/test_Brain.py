@@ -5,7 +5,7 @@ import pytest
 from collections import deque
 import itertools
 
-board_size = 3
+board_size = 8
 
 @pytest.fixture(scope="function", autouse=True)
 def my_board():
@@ -40,7 +40,6 @@ def test_search_settable_point(my_brain,my_board,tst_block):
     pts = my_brain.search_settable_point(my_board, tst_block[0])
     assert len(pts) == board_size ** 2
 
-
 @pytest.mark.parametrize(
     "cantset_points", [
         [],
@@ -50,11 +49,28 @@ def test_search_settable_point(my_brain,my_board,tst_block):
     )
 def test_search_settable_point2(my_brain,my_board,tst_block,cantset_points):
     for i,j in cantset_points:
-        my_board.now[i][j] = 1
+        my_board.now[j][i] = 1
 
     pts = my_brain.search_settable_point(my_board, tst_block[0])
+    assert len(pts) > 0
     for p in pts:
         assert p not in cantset_points
+
+@pytest.mark.parametrize(
+    "cantset_points,expect_point,b", [
+        ([(0,0)], (1,1), [[1]]),
+        ([(x,0) for x in range(board_size)], (1,1), [[1]]),
+        ([(x,x) for x in range(board_size)], (3,0), [[1,1,1],[1,1,1],[1,1,1]]),
+     ]
+    )
+def test_search_settable_point3(my_brain,my_board,expect_point,cantset_points,b):
+    for i,j in cantset_points:
+        my_board.now[i][j] = 1
+
+    pts = my_brain.search_settable_point(my_board, Block("test",b))
+    assert len(pts) > 0
+    for p in pts:
+        assert expect_point in pts
 
 
 @pytest.mark.parametrize(
@@ -116,16 +132,16 @@ def test_search_blocks_of_a_permutation_setting_cant(my_brain,my_board,cantset_p
     "tst_b", [
         ([
             Block("t1",[[1]]),
-            Block("t2",[[1,1,1]]),
-            Block("t3",[[1],[1],[1]])
+            Block("t2",[[1,1,1],[1,1,1],[1,1,1]]),
+            Block("t3",[[1,1],[1,1]])
          ])
      ]
     )
 def test_search_blocks_of_a_permutation_setting_secondblock_cantplay(my_brain,my_board,tst_b):
-    my_board.now = [[0 if x!=y else 1 for x in range(board_size)] for y in range(board_size)]
+    my_board.now = [[1 if x!=y else 0 for x in range(board_size)] for y in range(board_size)]
     
     result,eval = my_brain.search_blocks_of_a_permutation_setting(my_board,tst_b,[0,1,2])
-    
+
     r_1 = result.popleft()
     assert r_1.playable
     r_2 = result.popleft()
@@ -194,7 +210,7 @@ def test_count_settable_kinds_of_block(my_brain,my_board,tst_block,mask,expect):
 @pytest.mark.parametrize(
     "mask,expect", [
         ([[0 for x in range(board_size)] for y in range(board_size)], 0),
-        ([[1 for x in range(board_size)] for y in range(board_size)], 12+20*(board_size-2)+8*(board_size-2)**2),
+        ([[1 for x in range(board_size)] for y in range(board_size)], 0),
      ]
     )
 def test_count_around_block(my_brain,my_board,tst_block,mask,expect):

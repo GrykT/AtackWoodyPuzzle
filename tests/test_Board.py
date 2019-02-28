@@ -12,7 +12,7 @@ def my_board():
 
 
 def test_board_init(my_board):
-    ini = [[0 for i in range(board_size)] for j in range(board_size)]
+    ini = get_plane_board(0)
 
     assert my_board.now == ini
 
@@ -56,14 +56,17 @@ def test_board_can_set_here_in_empty(my_board):
 
 
 @pytest.mark.parametrize(
-    "x, y ,b", [
-        (0,0,[[1]]),
-        (0,0,[[1,1,1,1]]),
-        (board_size-3,board_size-1,[[1,1,1]]),
-        (board_size-1,board_size-3,[[1],[1],[1]]),
-        (0,0,[[1 for i in range(board_size)] for j in range(board_size)] )]        
+    "x, y ,b, canset", [
+        (0,0,[[1]],[]),
+        (0,0,[[1,1,1,1]],[]),
+        (board_size-3,board_size-1,[[1,1,1]],[]),
+        (board_size-1,board_size-3,[[1],[1],[1]],[]),
+        (0,0,[[0,1],[1,1]],[(0,0)]),
+    ]
     )
-def test_board_can_set_here_in_empty2(my_board,x,y,b):
+def test_board_can_set_here_in_empty2(my_board,x,y,b,canset):
+    for i,j in canset:
+        my_board.now = set_tst_board_block(my_board.now, i, j, [[1]])
     block = Block("test",b)
     assert my_board.can_set(block,x,y)
 
@@ -192,3 +195,6 @@ def set_tst_board_block(board,x,y,b):
         for y_i in range(0,len(b)):
             r[y+y_i][x+x_i] = r[y+y_i][x+x_i] or b[y_i][x_i]
     return r
+
+def get_plane_board(state=0):
+    return [[state for i in range(board_size)] for j in range(board_size)]

@@ -30,7 +30,7 @@ class Board:
         set_range = [v[x:x+len_v] for v in self.now[y:y+len_h]]
         
         and_calc = np.array(block.form) * np.array(set_range)
-        zero_range = np.array([[0 for i in range(len_h)] for j in range(len_v)])
+        zero_range = np.zeros((len_v,len_h), dtype=object)
 
         return (and_calc == zero_range).all()
 
