@@ -2,14 +2,15 @@ from collections import deque
 import itertools
 import random
 import copy
-import datetime
+from datetime import datetime
 import numpy as np
 
 class Brain:
     """Brain プレイヤーの脳。からだの外にある。盤面の評価値計算、最善手の探索。"""
-    def __init__(self, block_data):
+    def __init__(self, block_data, weights=(1,1,1,1)):
         self.max_depth = 5
         self.block_data = block_data
+        self.weights=weights
 
     def get_setting_info(self,real_board,blocks_field):
         """
@@ -36,12 +37,9 @@ class Brain:
         max_result,eval = sorted(results, key=lambda rs : rs[1], reverse=True)[0]
         
 
-        for r_que in results:
-            print(f"all_result_eval:{r_que[1]}")
-            for r in r_que[0]:
-                print(f"all_result_playable:{r.playable}")
-                print("permu:{} -({},{})".format(r.block.name,r.x,r.y))
-        print(f"selected_eval:{eval}")
+        #for r_que in results:
+        #    print(f"  all_result_eval:{r_que[1]}")
+        #print(f"selected_eval:{eval}")
         return max_result,eval
 
 
@@ -54,16 +52,15 @@ class Brain:
         """
         results = deque()
         tmp_results = deque()
-        eval = 0
+        eval = -float("inf")
         tmp_eval = 0
 
         if(depth > (len(blocks)-1) or depth > self.max_depth):
-            eval = self.calc_evaluation_value(board,blocks)
+            eval = self.calc_evaluation_value(board, blocks, weights=self.weights)
             return results,eval
 
         target_block = blocks[permutation[depth]]
         settable_points = self.search_settable_point(board,target_block)
-
         if(len(settable_points)>5):
             #パフォーマンス問題ありそうならここで刈り込みしないとだめ。
             #ボードサイズの2倍だとサイズ10でもう終わらない。10個でもだめ。
@@ -97,28 +94,43 @@ class Brain:
         与えられた盤面に与えられたブロックが置ける位置を全てリストアップ
         """
         settable_points = []
+        #ブロックの上下サイズで探索範囲を絞る
         for i,j in [(x,y) for x in range(board.size) \
-                          for y in range(board.size)]:
+                          for y in range(board.size) \
+                    #      if x <= board.size - block.w and y <= board.size - block.h
+                    ]:
             if(board.can_set(block,i,j)):
                 settable_points.append((i,j))
         return settable_points
 
-    def calc_evaluation_value(self,board,blocks):
+    def calc_evaluation_value(self,board,blocks,weights=(1,1,1,1)):
         #残りブロックが少ないほど良い
-        spaces =  self.count_space((board.size ** 2), board.now)
+        #print(f"    spaces {datetime.now()}")
+        spaces =  self.count_space((board.size * board.size), board.now)
         #ブロックが固まってるほど良い
+        #print(f"    around_blocks {datetime.now()}")
         around_blocks = self.count_around_block(board)
-        #置けるブロックの種類が多いほど良い（値*100）
+        #置けるブロックの種類が多いほど良い
+        #print(f"    kinds {datetime.now()}")
         kinds = self.count_settable_kinds_of_block(board, self.block_data.pattern_to_block())
-
-        return spaces + around_blocks + 100 * kinds
+        #消えてる列が多いほど良い
+        #print(f"    empty_lines {datetime.now()}")
+        empty_lines = self.count_empty_line(board)
+        #print(f"    end")
+        return sum([w*v for w,v in zip(weights,(spaces, around_blocks, kinds, empty_lines))])
 
     def count_space(self, all_count,board_list):
         return all_count - sum([p for line in board_list for p in line])
 
     def count_settable_kinds_of_block(self, board, blocks):
-        kinds = len([b for b in blocks if len(self.search_settable_point(board,b)) > 0])
-        return kinds
+        kinds = []
+        for b in blocks:
+            for i,j in itertools.product(range(board.size), range(board.size)):
+                if board.can_set(b,i,j):
+                    kinds.append(b)
+                    break
+
+        return len(kinds)
 
     def count_around_block(self,board):
         sum_around_blocks = 0
@@ -135,7 +147,16 @@ class Brain:
         #sum_around_blocks = sum(sum(around_blocks_list * bd))
         #空いている位置の周りが埋まってたら孤立しているので駄目
         sum_empty_around_blocks = sum(sum(around_blocks_list * (bd ^ ar_one)))
+
         return sum_around_blocks - sum_empty_around_blocks
+
+    def count_empty_line(self,board):
+        bd = np.array(board.now)
+        cnt = np.sum(np.all(bd==0,axis=0)) \
+             + np.sum(np.all(bd==0,axis=1))
+            
+        return cnt
+
 
 class Result_Calc:
     """

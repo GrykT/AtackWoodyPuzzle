@@ -1,4 +1,7 @@
 from Blocks import Block,Blocks
+import pytest
+
+
 
 def test_get_block_random():
     ptn = {"dot" : [1],
@@ -84,3 +87,17 @@ def test_pettern_to_block():
     for b in blocks.pattern_to_block():
         assert b.name in blocks.pattern.keys()
         assert b.form in blocks.pattern.values()
+
+
+@pytest.mark.parametrize(
+    "form,exp_w,exp_h", [
+        ([[1]],1,1),
+        ([[1,1]],2,1),
+        ([[1,1],[1,0],],2,2),
+    ]
+)
+def test_get_block_h(form,exp_w,exp_h):
+    b = Block("test",form)
+    assert b.w == exp_w
+    assert b.h == exp_h
+

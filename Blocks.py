@@ -6,6 +6,8 @@ class Block:
     def __init__(self,name="", form=[[1]]):
         self.name = name
         self.form = form
+        self.w = len(self.form[0])
+        self.h = len(self.form)
 
 class Blocks:
     """blocks ブロックの種類"""

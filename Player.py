@@ -1,4 +1,5 @@
 from collections import deque
+from datetime import datetime
 
 class Player:
     """Player プレイヤー　保管場所からブロックを選んで置けるところに置く"""
@@ -14,6 +15,7 @@ class Player:
                 pass
             self.logger = dummy()
             setattr(self.logger,"write",lambda s:-1)
+        self.brains = []
 
     def start(self):
         """
@@ -23,12 +25,14 @@ class Player:
         self.result_set_blocks_num = 0
         results_que = deque()
         cnt = 0
+        self.playing_board.__init__(self.playing_board.size)
 
         self.logger.write("start!")
         self.logger.write(self.get_boardstate())
 
         while(playable_game and cnt < self.max_count):
             self.logger.write("---------------------------------------")
+            
             blocks_field = self.pool.get_blocks()
             names = ",".join([b.name for b in blocks_field])
             self.logger.write(f"New get Blocks:{names}")
@@ -59,4 +63,18 @@ class Player:
         現在のボードを返す
         """
         return self.playing_board.out_state()
-        
+
+    def add_brain(self,brain):
+        self.brains.append(brain)
+
+    def start_learn(self):
+        self.logger.write = lambda s:-1
+        learned_set = []
+        for br in self.brains:
+            print(f"start...weights {br.weights}")
+            self.my_brain = br
+            set_num_list = [self.start() for i in range(5)]
+            set_num_ave = sum(set_num_list)/len(set_num_list)
+            print(f"end...result {set_num_list}\n          {set_num_ave}")
+            learned_set.append((set_num_ave, br))
+        return learned_set

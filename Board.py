@@ -18,19 +18,19 @@ class Board:
         if y < 0 or self.size - 1 < y:
             return False
 
-        len_h = len(block.form)
-        len_v = len(block.form[0])
+        len_h = block.h
+        len_w = block.w
 
-        if x + len_v > self.size:
+        if x + len_w > self.size:
             return False
 
         if y + len_h > self.size:
             return False
 
-        set_range = [v[x:x+len_v] for v in self.now[y:y+len_h]]
+        set_range = [w[x:x+len_w] for w in self.now[y:y+len_h]]
         
         and_calc = np.array(block.form) * np.array(set_range)
-        zero_range = np.zeros((len_v,len_h), dtype=object)
+        zero_range = np.zeros((len_w,len_h), dtype=object)
 
         return (and_calc == zero_range).all()
 

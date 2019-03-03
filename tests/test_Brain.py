@@ -139,9 +139,7 @@ def test_search_blocks_of_a_permutation_setting_cant(my_brain,my_board,cantset_p
     )
 def test_search_blocks_of_a_permutation_setting_secondblock_cantplay(my_brain,my_board,tst_b):
     my_board.now = [[1 if x!=y else 0 for x in range(board_size)] for y in range(board_size)]
-    
     result,eval = my_brain.search_blocks_of_a_permutation_setting(my_board,tst_b,[0,1,2])
-
     r_1 = result.popleft()
     assert r_1.playable
     r_2 = result.popleft()
@@ -218,3 +216,15 @@ def test_count_around_block(my_brain,my_board,tst_block,mask,expect):
     sum_around = my_brain.count_around_block(my_board)
     assert sum_around == expect
 
+
+@pytest.mark.parametrize(
+    "mask,expect", [
+        ([[0 for x in range(board_size)] for y in range(board_size)], 2*board_size),
+        ([[1 if (x,y)==(0,0) else 0 for x in range(board_size)]
+                                    for y in range(board_size)], 2*(board_size-1)),
+     ]
+    )
+def test_count_empty_line(my_brain,my_board,mask,expect):
+    my_board.now = mask
+    cnt = my_brain.count_empty_line(my_board)
+    assert cnt == expect
