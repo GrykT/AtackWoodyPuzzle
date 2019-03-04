@@ -123,14 +123,13 @@ class Brain:
         return all_count - sum([p for line in board_list for p in line])
 
     def count_settable_kinds_of_block(self, board, blocks):
-        kinds = []
+        cnt=0
         for b in blocks:
             for i,j in itertools.product(range(board.size), range(board.size)):
                 if board.can_set(b,i,j):
-                    kinds.append(b)
+                    cnt += 1
                     break
-
-        return len(kinds)
+        return cnt
 
     def count_around_block(self,board):
         sum_around_blocks = 0
